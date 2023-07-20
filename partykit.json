@@ -1,0 +1,4 @@
+{
+  "main": "src/partykit/server.ts",
+  "name": "voronoi-party"
+}
