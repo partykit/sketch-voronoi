@@ -47,7 +47,6 @@ export default function CursorsContextProvider(props : { children: React.ReactNo
                 switch(msg.type) {
                     case "sync":
                         const newOthers = { ...msg.cursors }
-                        console.log(newOthers)
                         setOthers(newOthers)
                         break;
                     case "update":
