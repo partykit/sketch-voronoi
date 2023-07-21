@@ -1,9 +1,9 @@
 'use client'
 
-import Link from "next/link"
 import { useEffect, useState, useRef } from "react"
 import { useCursors } from "./cursors-context"
 import OtherCursor from "./other-cursor"
+import SelfCursor from "./self-cursor"
 
 import * as d3 from 'd3';
 import { Delaunay } from "d3-delaunay"
@@ -118,6 +118,7 @@ export default function SharedSpace() {
             </div>
 
             { Object.keys(others).map((id) => <div key={id}><OtherCursor id={id} windowDimensions={windowDimensions} fill="#06f" /></div>) }
+            { self?.pointer === "touch" && <SelfCursor windowDimensions={windowDimensions} /> }
         </>
     )
 }
