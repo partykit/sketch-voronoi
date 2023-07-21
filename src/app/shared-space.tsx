@@ -1,6 +1,8 @@
 'use client'
 
 import { useEffect, useState, useRef } from "react"
+import { useSearchParams } from "next/navigation";
+
 import { useCursors } from "./cursors-context"
 import OtherCursor from "./other-cursor"
 import SelfCursor from "./self-cursor"
@@ -9,6 +11,11 @@ import * as d3 from 'd3';
 import { Delaunay } from "d3-delaunay"
 
 function Voronoi(props: {svgRef: React.RefObject<SVGSVGElement>, windowDimensions: { width: number, height: number }}) {
+    const searchParams = useSearchParams();
+    const isPartyKitWebsite = searchParams?.get("host") === "io";
+    // when hosted in an iframe on the partykit website, start color
+    // rotation from purple instead of red to make the single-visitor
+    // experience look better
     const { others, self } = useCursors()
     const [points, setPoints] = useState<number[][]>([])
     const { svgRef, windowDimensions } = props
@@ -52,7 +59,7 @@ function Voronoi(props: {svgRef: React.RefObject<SVGSVGElement>, windowDimension
         .data( points.map((d,i) => voronoi.renderCell(i)) )
         .join('path')
           .attr('d', d => d)
-          .style('fill', (d,i) => pastel(i))
+          .style("fill", (d, i) => pastel(isPartyKitWebsite ? i + 2 : i))
           .style('opacity', 0.8)
           .style('stroke', 'white')
           .style('stroke-opacity', 0.9)
