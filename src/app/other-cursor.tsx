@@ -1,8 +1,8 @@
 import { useCursors } from "./cursors-context"
 
-// WARNING
-// Icon is https://github.com/daviddarnes/mac-cursors
-// It is not free: license is the Apple User Agreement
+// NOTE
+// The pointer SVG is from https://github.com/daviddarnes/mac-cursors
+// The license is the Apple User Agreement
 
 function getFlagEmoji(countryCode: string) {
     const codePoints = countryCode

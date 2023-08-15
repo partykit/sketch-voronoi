@@ -18,7 +18,7 @@
     "eslint": "8.45.0",
     "eslint-config-next": "13.4.10",
     "next": "13.4.10",
-    "partykit": "^0.0.0-a213f16",
+    "partykit": "^0.0.0-30e4dbd",
     "partysocket": "^0.0.0-a213f16",
     "postcss": "8.4.26",
     "react": "18.2.0",
