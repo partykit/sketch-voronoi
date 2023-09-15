@@ -34,9 +34,9 @@ export default function CursorsContextProvider(props : { room: string, children:
     const [dimensions, setDimensions] = useState<{ width: number, height: number }>({ width: 0, height: 0 })
 
     const socket = usePartySocket({
-            //host: "localhost:1999", // for local development
+            // host: "localhost:1999", // for local development
             host: "voronoi-party.jevakallio.partykit.dev", // for production
-            room: props.room
+            room: props.room    
     })
     const [others, setOthers] = useState<OtherCursorsMap>({})
 

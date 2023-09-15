@@ -1,93 +1,116 @@
-import type {PartyKitServer, PartyKitRoom} from "partykit/server";
+import { writeSync } from "fs";
+import type * as Party from "partykit/server";
 
 type Cursor = {
-    x: number,
-    y: number,
-    country: string | null,
-    lastUpdate: number,
-    pointer: "mouse" | "touch",
-}
+  x: number;
+  y: number;
+  country: string | null;
+  lastUpdate: number;
+  pointer: "mouse" | "touch";
+};
 
 type UpdateMessage = {
-    type: "update",
-    id: string, // websocket.id
+  type: "update";
+  id: string; // websocket.id
 } & Cursor;
 
 type SyncMessage = {
-    type: "sync",
-    cursors: {[id: string]: Cursor},
-}
+  type: "sync";
+  cursors: { [id: string]: Cursor };
+};
 
 type RemoveMessage = {
-    type: "remove",
-    id: string, // websocket.id
-}
+  type: "remove";
+  id: string; // websocket.id
+};
 
 // server.ts
-export default {
-    onConnect(websocket, room, {request}) { 
+export default class CursorServer implements Party.Server {
+  constructor(public party: Party.Party) {}
+  options: Party.ServerOptions = {
+    hibernate: true,
+  };
 
-        const country = request.cf?.country ?? null;
+  onConnect(
+    websocket: Party.Connection,
+    { request }: Party.ConnectionContext
+  ): void | Promise<void> {
+    const country = request.cf?.country ?? null;
 
-        // Stash the country in the websocket attachment
-        websocket.serializeAttachment({
-            ...websocket.deserializeAttachment(),
-            country: country,
-        })
+    // Stash the country in the websocket attachment
+    websocket.serializeAttachment({
+      ...websocket.deserializeAttachment(),
+      country: country,
+    });
 
-        // On connect, send a "sync" message to the new connection
-        // Pull the cursor from all websocket attachments
-        let cursors: { [id: string]: Cursor } = {};
-        Array.from(room.connections).forEach(([id, ws]) => {
-          let cursor = ws.deserializeAttachment();
-          if (id !== websocket.id && cursor !== null && cursor.x !== undefined && cursor.y !== undefined) {
-            cursors[id] = cursor;
-          }
-        });
-        const msg = <SyncMessage>{
-            type: "sync",
-            cursors: cursors,
-        };
+    // On connect, send a "sync" message to the new connection
+    // Pull the cursor from all websocket attachments
+    let cursors: { [id: string]: Cursor } = {};
+    for (const ws of this.party.getConnections()) {
+      const id = ws.id;
+      let cursor = ws.deserializeAttachment();
+      if (
+        id !== websocket.id &&
+        cursor !== null &&
+        cursor.x !== undefined &&
+        cursor.y !== undefined
+      ) {
+        cursors[id] = cursor;
+      }
+    }
 
-        websocket.send(JSON.stringify(msg));
-    },
-    onMessage(message, websocket, room) {
-        const position = JSON.parse(message as string);
-        const attachment = websocket.deserializeAttachment();
-        const cursor = <Cursor>{
-            x: position.x,
-            y: position.y,
-            pointer: position.pointer,
-            country: attachment.country,
-            lastUpdate: Date.now(),
-        };
+    const msg = <SyncMessage>{
+      type: "sync",
+      cursors: cursors,
+    };
 
-        // Stash the cursor in the websocket attachment
-        websocket.serializeAttachment({
-            ...attachment,
+    websocket.send(JSON.stringify(msg));
+  }
+
+  onMessage(
+    message: string,
+    websocket: Party.Connection
+  ): void | Promise<void> {
+    const position = JSON.parse(message as string);
+    const attachment = websocket.deserializeAttachment();
+    const cursor = <Cursor>{
+      x: position.x,
+      y: position.y,
+      pointer: position.pointer,
+      country: attachment.country,
+      lastUpdate: Date.now(),
+    };
+
+    // Stash the cursor in the websocket attachment
+    websocket.serializeAttachment({
+      ...attachment,
+      ...cursor,
+    });
+
+    const msg =
+      position.x && position.y
+        ? <UpdateMessage>{
+            type: "update",
             ...cursor,
-        })
-
-        const msg = (position.x && position.y)
-            ? <UpdateMessage>{
-                type: "update",
-                id: websocket.id,
-                ...cursor,
-            }
-            : <RemoveMessage>{
-                type: "remove",
-                id: websocket.id,
-            };
-
-        // Broadcast, excluding self
-        room.broadcast(JSON.stringify(msg), [websocket.id]);
-    },
-    onClose(websocket, room) {
-        // Broadcast a "remove" message to all connections
-        const msg = <RemoveMessage>{
+            id: websocket.id,
+          }
+        : <RemoveMessage>{
             type: "remove",
             id: websocket.id,
-        };
-        room.broadcast(JSON.stringify(msg), []);
-    }
-} satisfies PartyKitServer;
+          };
+
+    // Broadcast, excluding self
+    this.party.broadcast(JSON.stringify(msg), [websocket.id]);
+  }
+
+  onClose(websocket: Party.Connection) {
+    // Broadcast a "remove" message to all connections
+    const msg = <RemoveMessage>{
+      type: "remove",
+      id: websocket.id,
+    };
+    this.party.broadcast(JSON.stringify(msg), []);
+  }
+}
+
+CursorServer satisfies Party.Worker;
