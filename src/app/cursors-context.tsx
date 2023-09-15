@@ -29,14 +29,14 @@ export function useCursors() {
     return useContext(CursorsContext)
 }
 
-export default function CursorsContextProvider(props : { children: React.ReactNode }) {
+export default function CursorsContextProvider(props : { room: string, children: React.ReactNode }) {
     const [self, setSelf] = useState<Position | null>(null)
     const [dimensions, setDimensions] = useState<{ width: number, height: number }>({ width: 0, height: 0 })
 
     const socket = usePartySocket({
             //host: "localhost:1999", // for local development
-            host: "voronoi-party.genmon.partykit.dev", // for production
-            room: "voronoi-room-2",
+            host: "voronoi-party.jevakallio.partykit.dev", // for production
+            room: props.room
     })
     const [others, setOthers] = useState<OtherCursorsMap>({})
 

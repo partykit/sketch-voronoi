@@ -9,7 +9,8 @@ export default function Home({
 }) {
   // when hosted in an iframe on the partykit website, don't render link to the site
   const isPartyKitWebsite = searchParams?.host === "io";
-
+  const room =
+    typeof searchParams?.room === "string" ? searchParams.room : "voronoi-room";
   return (
     <main className="flex flex-col gap-4 min-h-screen p-6 overflow-hidden select-none">
       {isPartyKitWebsite ? null : (
@@ -21,7 +22,7 @@ export default function Home({
         </div>
       )}
 
-      <CursorsContextProvider>
+      <CursorsContextProvider room={room}>
         <SharedSpace />
       </CursorsContextProvider>
     </main>
