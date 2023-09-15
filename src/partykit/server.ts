@@ -1,4 +1,3 @@
-import { writeSync } from "fs";
 import type * as Party from "partykit/server";
 
 type Cursor = {
@@ -28,7 +27,7 @@ type RemoveMessage = {
 export default class CursorServer implements Party.Server {
   constructor(public party: Party.Party) {}
   options: Party.ServerOptions = {
-    hibernate: true,
+    hibernate: false,
   };
 
   onConnect(
@@ -49,6 +48,13 @@ export default class CursorServer implements Party.Server {
     for (const ws of this.party.getConnections()) {
       const id = ws.id;
       let cursor = ws.deserializeAttachment();
+      console.log(
+        "[connect]",
+        this.party.id,
+        ws.id,
+        ws.readyState,
+        cursor.country
+      );
       if (
         id !== websocket.id &&
         cursor !== null &&
@@ -109,6 +115,14 @@ export default class CursorServer implements Party.Server {
       type: "remove",
       id: websocket.id,
     };
+
+    console.log(
+      "[disconnect]",
+      this.party.id,
+      websocket.id,
+      websocket.readyState
+    );
+
     this.party.broadcast(JSON.stringify(msg), []);
   }
 }
