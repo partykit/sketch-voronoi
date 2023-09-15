@@ -36,7 +36,7 @@ export default function CursorsContextProvider(props : { children: React.ReactNo
     const socket = usePartySocket({
             //host: "localhost:1999", // for local development
             host: "voronoi-party.genmon.partykit.dev", // for production
-            room: "voronoi-room",
+            room: "voronoi-room-2",
     })
     const [others, setOthers] = useState<OtherCursorsMap>({})
 
