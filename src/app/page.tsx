@@ -17,7 +17,7 @@ export default function Home({
   const host =
     typeof searchParams?.partyhost === "string"
       ? searchParams.partyhost
-      : "voronoi-party.jevakallio.partykit.dev";
+      : "voronoi-party.genmon.partykit.dev";
 
   return (
     <main className="flex flex-col gap-4 min-h-screen p-6 overflow-hidden select-none">

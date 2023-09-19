@@ -27,7 +27,7 @@ type RemoveMessage = {
 export default class CursorServer implements Party.Server {
   constructor(public party: Party.Party) {}
   options: Party.ServerOptions = {
-    hibernate: false,
+    hibernate: true,
   };
 
   onConnect(
