@@ -8,7 +8,7 @@ This Voronoi diagram is responsive to multiplayer cursors, and can be found at [
 
 This app was created during [Matt](https://interconnected.org)'s summer 2023 residency. The purpose is to experiment with multiplayer interactions, and simultaneously see what PartyKit can do. It's called a sketch because it's lightweight and quick, and because we learn something in making it.
 
-### What you'll find here
+## What you'll find here
 
 This app is based on Next.js and PartyKit.
 
