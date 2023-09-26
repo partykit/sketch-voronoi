@@ -1,11 +1,19 @@
 import type * as Party from "partykit/server";
 
 type Cursor = {
-  x: number;
-  y: number;
+  // replicating the default connection fields to avoid
+  // having to do an extra deserializeAttachment
+  id: string;
+  uri: string;
+
+  // country is set upon connection
   country: string | null;
-  lastUpdate: number;
-  pointer: "mouse" | "touch";
+
+  // cursor fields are only set on first message
+  x?: number;
+  y?: number;
+  pointer?: "mouse" | "touch";
+  lastUpdate?: number;
 };
 
 type UpdateMessage = {
@@ -22,6 +30,8 @@ type RemoveMessage = {
   type: "remove";
   id: string; // websocket.id
 };
+
+type ConnectionWithCursor = Party.Connection & { cursor?: Cursor };
 
 // server.ts
 export default class CursorServer implements Party.Server {
@@ -42,19 +52,15 @@ export default class CursorServer implements Party.Server {
       country: country,
     });
 
+    console.log("[connect]", this.party.id, websocket.id, country);
+
     // On connect, send a "sync" message to the new connection
     // Pull the cursor from all websocket attachments
     let cursors: { [id: string]: Cursor } = {};
     for (const ws of this.party.getConnections()) {
       const id = ws.id;
-      let cursor = ws.deserializeAttachment();
-      console.log(
-        "[connect]",
-        this.party.id,
-        ws.id,
-        ws.readyState,
-        cursor.country
-      );
+      let cursor =
+        (ws as ConnectionWithCursor).cursor ?? ws.deserializeAttachment();
       if (
         id !== websocket.id &&
         cursor !== null &&
@@ -78,20 +84,17 @@ export default class CursorServer implements Party.Server {
     websocket: Party.Connection
   ): void | Promise<void> {
     const position = JSON.parse(message as string);
-    const attachment = websocket.deserializeAttachment();
+    const prevCursor = this.getCursor(websocket);
     const cursor = <Cursor>{
+      id: websocket.id,
       x: position.x,
       y: position.y,
       pointer: position.pointer,
-      country: attachment.country,
+      country: prevCursor?.country,
       lastUpdate: Date.now(),
     };
 
-    // Stash the cursor in the websocket attachment
-    websocket.serializeAttachment({
-      ...attachment,
-      ...cursor,
-    });
+    this.setCursor(websocket, cursor);
 
     const msg =
       position.x && position.y
@@ -107,6 +110,31 @@ export default class CursorServer implements Party.Server {
 
     // Broadcast, excluding self
     this.party.broadcast(JSON.stringify(msg), [websocket.id]);
+  }
+
+  getCursor(connection: ConnectionWithCursor) {
+    if (!connection.cursor) {
+      connection.cursor = connection.deserializeAttachment();
+    }
+
+    return connection.cursor;
+  }
+
+  setCursor(connection: ConnectionWithCursor, cursor: Cursor) {
+    let prevCursor = connection.cursor;
+    connection.cursor = cursor;
+
+    // throttle writing to attachment to once every 100ms
+    if (
+      !prevCursor ||
+      !prevCursor.lastUpdate ||
+      (cursor.lastUpdate && cursor.lastUpdate - prevCursor.lastUpdate > 100)
+    ) {
+      // Stash the cursor in the websocket attachment
+      connection.serializeAttachment({
+        ...cursor,
+      });
+    }
   }
 
   onClose(websocket: Party.Connection) {
