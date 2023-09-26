@@ -30,14 +30,14 @@ function Voronoi(props: {
       points.push([
         self.x * windowDimensions.width,
         self.y * windowDimensions.height,
-        "self",
+        "0", // self
       ] as Point);
     }
     if (points.length <= 1) {
       points.push([
         windowDimensions.width / 2,
         windowDimensions.height / 2,
-        "dummy",
+        "1", // dummy point
       ] as Point);
     }
     setPoints(points);
@@ -71,9 +71,25 @@ function Voronoi(props: {
     function stringToHash(str: string): number {
       let hash = 0;
       for (let i = 0; i < str.length; i++) {
-        const char = str.charCodeAt(i);
-        hash = (hash << 5) - hash + char;
-        hash |= 0; // Convert to 32bit integer
+        let char = str.charCodeAt(i);
+
+        // Skip hyphens
+        if (char === 45) continue; // ASCII for '-'
+
+        // Convert hex character to its integer value
+        let value;
+        if (char >= 48 && char <= 57) {
+          // '0' to '9'
+          value = char - 48;
+        } else if (char >= 97 && char <= 102) {
+          // 'a' to 'f'
+          value = char - 87; // 10 to 15
+        } else {
+          continue;
+        }
+
+        // Mix the value into the hash
+        hash = (hash * 17) ^ value; // Using XOR and a prime multiplier
       }
       return hash;
     }
@@ -85,7 +101,7 @@ function Voronoi(props: {
       const hash = stringToHash(id);
       // OFFSET is a magic number. Adjust this such that the colour for the zeroth connection
       // (called "dummy" above) and first human connection is pleasing
-      const OFFSET = 7;
+      const OFFSET = 4;
       const hue = ((Math.abs(hash) + OFFSET) * 137.508) % 360;
       return d3.hsl(hue, 0.5, 0.8).formatHex();
     };
