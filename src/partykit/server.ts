@@ -37,14 +37,8 @@ export default class CursorServer implements Party.Server {
     websocket: Party.Connection<Cursor>,
     { request }: Party.ConnectionContext
   ): void | Promise<void> {
-    console.log("websocket", websocket);
-    console.log("websocket.state", websocket.state);
-    console.log("websocket.setState", websocket.setState);
-
     const country = (request.cf?.country as string) ?? null;
-    const cursor = websocket.setState({
-      country,
-    });
+    websocket.setState({ country });
 
     console.log("[connect]", this.party.id, websocket.id, country);
 
